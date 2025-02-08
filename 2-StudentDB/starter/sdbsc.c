@@ -115,7 +115,7 @@ int add_student(int fd, int id, char *fname, char *lname, int gpa)
     // Create a new student record with the provided information
     student_t new_student = {id, "", "", gpa};
     strncpy(new_student.fname, fname, sizeof(new_student.fname) - 1); // Copy the first name
-    strncpy(new_student.lname, lname, sizeof(new_student.fname) - 1); // Copy the last name
+    strncpy(new_student.lname, lname, sizeof(new_student.lname) - 1); // Copy the last name
 
     // Move to the correct spot in the file and write the new student data
     if ((lseek(fd, (off_t)id * STUDENT_RECORD_SIZE, SEEK_SET) < 0) || (write(fd, &new_student, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE)) {
