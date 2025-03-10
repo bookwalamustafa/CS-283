@@ -1,0 +1,10 @@
+append_test.txt
+bats
+dsh
+dsh.dSYM
+dsh_cli.c
+dshlib.c
+dshlib.h
+makefile
+out.txt
+test_output.txt
