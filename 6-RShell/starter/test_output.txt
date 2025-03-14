@@ -1,0 +1,15 @@
+HMMMM
+append_test.txt
+bats
+dsh
+dsh.dSYM
+dsh_cli.c
+dshlib.c
+dshlib.h
+makefile
+rsh_cli.c
+rsh_server.c
+rshlib.h
+test_output.txt
+testfile
+testinput
