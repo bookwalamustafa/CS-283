@@ -92,15 +92,16 @@
  */
 int exec_remote_cmd_loop(char *address, int port)
 {
-    char *cmd_buff = (char *)malloc(SH_CMD_MAX);
-    char *rsp_buff = (char *)malloc(RDSH_COMM_BUFF_SZ);
-    int cli_socket = -1;
+    char *cmd_buff, *rsp_buff;
+    int cli_socket;
     ssize_t io_size;
-    int is_eof;
 
-    if (!cmd_buff || !rsp_buff) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
-        return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_MEMORY);
+    cmd_buff = (char *)malloc(SH_CMD_MAX);
+    rsp_buff = (char *)malloc(RDSH_COMM_BUFF_SZ);
+    
+    if (cmd_buff == NULL || rsp_buff == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        return client_cleanup(-1, cmd_buff, rsp_buff, ERR_MEMORY);
     }
 
     cli_socket = start_client(address, port);
@@ -120,33 +121,29 @@ int exec_remote_cmd_loop(char *address, int port)
         cmd_buff[strcspn(cmd_buff, "\n")] = '\0';
 
         if (strcmp(cmd_buff, EXIT_CMD) == 0) {
-            printf("Exiting remote shell...\n");
             break;
         }
 
         io_size = send(cli_socket, cmd_buff, strlen(cmd_buff) + 1, 0);
         if (io_size < 0) {
-            perror("send");
             return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_RDSH_COMMUNICATION);
         }
 
         while (1) {
             io_size = recv(cli_socket, rsp_buff, RDSH_COMM_BUFF_SZ, 0);
-            
+
             if (io_size < 0) {
-                perror("recv");
                 return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_RDSH_COMMUNICATION);
             }
             if (io_size == 0) {
-                fprintf(stderr, "Server closed connection.\n");
                 return client_cleanup(cli_socket, cmd_buff, rsp_buff, ERR_RDSH_COMMUNICATION);
             }
 
             printf("%.*s", (int)io_size, rsp_buff);
 
-            is_eof = (rsp_buff[io_size - 1] == RDSH_EOF_CHAR) ? 1 : 0;
-            if (is_eof)
+            if (rsp_buff[io_size - 1] == RDSH_EOF_CHAR) {
                 break;
+            }
         }
     }
 
@@ -182,7 +179,6 @@ int start_client(char *server_ip, int port) {
 
     cli_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (cli_socket < 0) {
-        perror("socket");
         return ERR_RDSH_CLIENT;
     }
 
@@ -191,13 +187,11 @@ int start_client(char *server_ip, int port) {
     addr.sin_port = htons(port);
 
     if (inet_pton(AF_INET, server_ip, &addr.sin_addr) <= 0) {
-        perror("inet_pton");
         close(cli_socket);
         return ERR_RDSH_CLIENT;
     }
 
     if (connect(cli_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("connect");
         close(cli_socket);
         return ERR_RDSH_CLIENT;
     }
